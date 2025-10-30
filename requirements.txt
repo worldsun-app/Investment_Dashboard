@@ -1,0 +1,10 @@
+dash
+dash-bootstrap-components
+plotly
+pandas
+numpy<2.0
+gunicorn
+pygsheets
+yfinance
+Flask
+Flask-Cors

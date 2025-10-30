@@ -11,9 +11,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 複製整個應用程式程式碼
-# 包括 InvestmentDashboard 目錄和 service-account.json
+# 包括 InvestmentDashboard 目錄
 COPY InvestmentDashboard/ InvestmentDashboard/
-COPY service-account.json .
+# 移除複製 service-account.json 的指令，因為它將透過環境變數提供
 
 # 暴露應用程式運行的埠
 EXPOSE 5001

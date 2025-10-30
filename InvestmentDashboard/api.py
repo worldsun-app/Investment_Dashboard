@@ -21,11 +21,16 @@ def get_fund_data(strategy_name):
             return None
     return FUND_DATA_CACHE[strategy_name]
 
+# --- 新增：健康檢查端點 ---
+@app.route("/")
+def health_check():
+    """
+    提供給雲端平台的健康檢查端點。
+    """
+    return jsonify({"status": "healthy", "message": "Investment Dashboard API is running."})
+
 @app.route("/api/strategies/<strategy_name>/intro")
 def get_strategy_intro(strategy_name):
-    """
-    獲取指定策略的介紹頁面資料。
-    """
     formatted_strategy_name = strategy_name.replace('-', ' ')
     fund_data = get_fund_data(formatted_strategy_name)
     if not fund_data:
@@ -35,14 +40,11 @@ def get_strategy_intro(strategy_name):
     asset_allocation = fund_data.get_asset_allocation()
     sector_allocation = fund_data.get_sector_allocation()
     
-    # --- 新增遺漏的資料 ---
     date, acc_ret = fund_data.get_components_acc_ret()
     risk_framework_list = fund_data.risk_framework_list
     
-    # --- 產生圖表 ---
     asset_pie_fig = charts.make_asset_pie_figure(asset_allocation)
     sector_pie_fig = charts.make_sector_pie_figure(sector_allocation)
-    # --- 新增成分股長條圖 ---
     components_bar_fig = charts.make_components_bar_figure(date, acc_ret)
     
     response_data = {
@@ -52,7 +54,6 @@ def get_strategy_intro(strategy_name):
         "philosophy": philosophy,
         "asset_allocation_chart": pio.to_json(asset_pie_fig),
         "sector_allocation_chart": pio.to_json(sector_pie_fig),
-        # --- 在回應中加入新資料 ---
         "components_bar_chart": pio.to_json(components_bar_fig),
         "risk_framework": risk_framework_list
     }
@@ -61,9 +62,6 @@ def get_strategy_intro(strategy_name):
 
 @app.route("/api/strategies/<strategy_name>/performance")
 def get_strategy_performance(strategy_name):
-    """
-    獲取指定策略的績效分析頁面資料。
-    """
     formatted_strategy_name = strategy_name.replace('-', ' ')
     fund_data = get_fund_data(formatted_strategy_name)
     if not fund_data:

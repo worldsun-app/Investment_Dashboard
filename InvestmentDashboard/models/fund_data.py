@@ -5,24 +5,22 @@ import numpy as np
 import yfinance as yf
 from InvestmentDashboard.models.fund_config import FUND_CONFIG
 
-
 SHEET_URL = "https://docs.google.com/spreadsheets/d/14uXT0z3TIry_vlEAMiEV1i-MYiaVSgiO5FZ5f8szDUM/edit?gid=0#gid=0"
-# --- 修正金鑰檔案路徑 ---
-# 在 Docker 環境中，工作目錄是 /app，所以 service-account.json 會在這個路徑下
-SERVICE_KEY_FILE = "service-account.json"
-GOOGLE_KEY_ENV = "GOOGLE_SERVICE_KEY"
 
-# 這段邏輯會從環境變數創建 service-account.json，非常適合部署環境
-if not os.path.exists(SERVICE_KEY_FILE):
-    key_content = os.environ.get(GOOGLE_KEY_ENV)
-    if key_content:
-        with open(SERVICE_KEY_FILE, "w") as f:
-            f.write(key_content)
-    else:
-        # 在生產環境中，如果沒有環境變數，我們應該拋出錯誤
-        # 在本地開發時，您可以將 service-account.json 放在專案根目錄
-        if not os.path.exists(os.path.join(os.path.dirname(__file__), '..', '..', SERVICE_KEY_FILE)):
-             raise RuntimeError("Google service key missing in environment variable or file.")
+# --- 修正金鑰處理邏輯以適應 Zeabur ---
+
+# 預設的金鑰檔案名稱
+DEFAULT_SERVICE_KEY_FILE = "service-account.json"
+# 從環境變數讀取金鑰檔案的路徑
+# 這樣您就可以在 Zeabur 中設定 GOOGLE_SERVICE_KEY=/service-account.json
+SERVICE_KEY_FILE_PATH = os.environ.get("GOOGLE_SERVICE_KEY", DEFAULT_SERVICE_KEY_FILE)
+
+# 檢查金鑰檔案是否存在
+if not os.path.exists(SERVICE_KEY_FILE_PATH):
+    # 如果在 Zeabur 指定的路徑下找不到檔案，就拋出一個更明確的錯誤
+    raise RuntimeError(
+        f"Service account key not found at the path specified by GOOGLE_SERVICE_KEY: {SERVICE_KEY_FILE_PATH}"
+    )
 
 # Mapping strategy to worksheet name
 PERFORMANCE_SHEET_MAP = {
@@ -48,8 +46,8 @@ class FundData(object):
         """
         self.strategy = strategy
 
-        # 連線並讀取 Google Sheets
-        gc = pygsheets.authorize(service_file=SERVICE_KEY_FILE)
+        # --- 直接使用來自環境變數的路徑進行授權 ---
+        gc = pygsheets.authorize(service_file=SERVICE_KEY_FILE_PATH)
         sheet = gc.open_by_url(SHEET_URL)
 
         # 載入績效數據

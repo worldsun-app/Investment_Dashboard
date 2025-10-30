@@ -3,11 +3,26 @@ import pygsheets
 import os
 import numpy as np
 import yfinance as yf
-from models.fund_config import FUND_CONFIG
+from InvestmentDashboard.models.fund_config import FUND_CONFIG
 
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/14uXT0z3TIry_vlEAMiEV1i-MYiaVSgiO5FZ5f8szDUM/edit?gid=0#gid=0"
-SERVICE_KEY_FILE = "../service-account.json"
+# --- 修正金鑰檔案路徑 ---
+# 在 Docker 環境中，工作目錄是 /app，所以 service-account.json 會在這個路徑下
+SERVICE_KEY_FILE = "service-account.json"
+GOOGLE_KEY_ENV = "GOOGLE_SERVICE_KEY"
+
+# 這段邏輯會從環境變數創建 service-account.json，非常適合部署環境
+if not os.path.exists(SERVICE_KEY_FILE):
+    key_content = os.environ.get(GOOGLE_KEY_ENV)
+    if key_content:
+        with open(SERVICE_KEY_FILE, "w") as f:
+            f.write(key_content)
+    else:
+        # 在生產環境中，如果沒有環境變數，我們應該拋出錯誤
+        # 在本地開發時，您可以將 service-account.json 放在專案根目錄
+        if not os.path.exists(os.path.join(os.path.dirname(__file__), '..', '..', SERVICE_KEY_FILE)):
+             raise RuntimeError("Google service key missing in environment variable or file.")
 
 # Mapping strategy to worksheet name
 PERFORMANCE_SHEET_MAP = {
@@ -237,4 +252,3 @@ class FundData(object):
         ret = df_this_year['cum_return'].iloc[-1] / df_this_year['cum_return'].iloc[0] - 1
         port_ytd_ret = (1 + ret) * (1 + port_mtd_ret) - 1
         return port_ytd_ret
-

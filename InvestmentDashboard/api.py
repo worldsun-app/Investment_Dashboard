@@ -1,11 +1,12 @@
 import os
+import sys
 from flask import Flask, jsonify, abort
 from flask_cors import CORS
 import plotly.io as pio
 import plotly.express as px
-
-from models.fund_data import FundData
-from utils import charts
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from InvestmentDashboard.models.fund_data import FundData
+from InvestmentDashboard.utils import charts
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
@@ -21,7 +22,6 @@ def get_fund_data(strategy_name):
             return None
     return FUND_DATA_CACHE[strategy_name]
 
-# --- 新增：健康檢查端點 ---
 @app.route("/")
 def health_check():
     """
